@@ -22,7 +22,7 @@ client.connect((address, 8012))
 # Encrypts message with AES and sends nonce, ciphertext, and tag to the server 
 def encryptAES(message):
 	# Get shared key from keyfile
-	key_file = open("key_file.bin", "rb")
+	key_file = open("AES_key_file.bin", "rb")
 	key = key_file.read(16)	
 	print("\nFound shared key: " + str(key))
 #	print("Key file type: "+str(type(key)))	
