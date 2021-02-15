@@ -4,20 +4,21 @@
 
 # This program (client.py) is "Alice", who encrypts messages and sends them to "Bob" (server.py).
 # First, enter an 18-byte message, then select the encryption scheme.
-
-import socket
-import time
-
-# PyCryptodome
-from Cryptodome.Cipher import AES
+# PyCryptodome:
+# pip install pycryptodomex
 # https://pycryptodome.readthedocs.io/en/latest/src/examples.html
 # https://pycryptodome.readthedocs.io/en/latest/src/cipher/aes.html?highlight=aes
 # https://pycryptodome.readthedocs.io/en/latest/src/public_key/rsa.html?highlight=rsa
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+import socket
+import time
+from Cryptodome.Cipher import AES, PKCS1_OAEP
+from Crypto.PublicKey import RSA
 
 # declare+connect socket
 address='127.0.0.1'
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect((address, 8012))
+client.connect((address, 8001))
 
 # Encrypts message with AES and sends nonce, ciphertext, and tag to the server 
 def encryptAES(message):
@@ -36,7 +37,7 @@ def encryptAES(message):
 	print("Sending tag to server: " + str(tag))
 
 	# Send nonce, ciphertext, and tag to server
-	send("1#" + nonce.decode("latin-1") + "#" + ciphertext.decode("latin-1") + "#" + tag.decode("latin-1"))	
+	send("1#####" + nonce.decode("latin-1") + "#####" + ciphertext.decode("latin-1") + "#####" + tag.decode("latin-1"))	
 	
 	# Note:
 	# Nonce, ciphertext, and tag are decoded as latin-1 strings individually, then
@@ -46,11 +47,15 @@ def encryptAES(message):
 
 # Encrypts message with RSA and sends to the server	
 def encryptRSA(message):
-	send("2#aaaa")
+	public_key = RSA.import_key(open("RSA_key_file.pem").read())
+	print("\nFound public RSA key: " + str(public_key))	
+	cipher = PKCS1_OAEP.new(public_key)
+	ciphertext = cipher.encrypt(message.encode("utf-8"))
+	send("2#####" + ciphertext.decode("latin-1"))
 
 def main():
 	# Send connection request, wait, then print response
-	client.send(bytes("0#"+address, 'utf-8'))
+	client.send(bytes("0#####"+address, 'utf-8'))
 	time.sleep(1)
 	print("\n"+str(client.recv(4097)).replace("b'","").replace("'","")+"\n")
 
@@ -77,10 +82,15 @@ def menu():
 # request = str = message to be sent
 def send(request):
 	print("SENDING REQUEST:")
-	print(request)
+	print(shorten(str(request)))
 	client.send(bytes(request, 'utf-8'))
 	time.sleep(1)
 	recieve = str(client.recv(4096))
 	print("\n"+recieve.replace("b'","").replace("'","").replace('b"','').replace('"','')+"\n")
+
+# Shortens a string if len>20
+def shorten(string):
+	if len(string) > 20: return string[:40] + "..."
+	else: return string
 
 main()
