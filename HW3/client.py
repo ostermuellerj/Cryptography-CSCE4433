@@ -25,7 +25,7 @@ def encryptAES(message):
 	# key = ""
 	key_file = open("key_file.bin", "rb")
 	key = key_file.read(16)	
-	print("Found shared key: " + str(key))
+	print("\nFound shared key: " + str(key))
 #	print(key)
 #	print("Key file type: "+str(type(key)))	
 	
