@@ -122,8 +122,8 @@ while True:
 				ciphertext = from_client[2]
 				tag = from_client[3]
 				message = decryptAES(nonce, ciphertext, tag)								
-				print("Decrypted message:\n" + str(message))
-				return_msg="Message was decrypted: " + str(message)
+				print("Decrypted message:\n" + message.decode())
+				return_msg="Message was decrypted by server: " + str(message)
 			except Exception as e: 
 				print(e)
 				print("Cannot parse AES paramenters from client")
