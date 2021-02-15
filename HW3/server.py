@@ -19,7 +19,7 @@ serv.bind(('127.0.0.1', portNum))
 serv.listen(5)
 
 # Generate AES key file (Alice/Client and Bob/Server can both access, we assume it is secure)
-key_file = open("key_file.bin", "wb")
+key_file = open("AES_key_file.bin", "wb")
 key = get_random_bytes(16)
 print("\nAES shared key generated: ")
 print(key)
