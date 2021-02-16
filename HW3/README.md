@@ -2,8 +2,8 @@
 
 This program implements AES (optional EAX or CBC mode) and RSA (single key, not secure) encryption for user-inputted messages over a socket connection between two programs.
 
-Client: Alice
-Server: Bob
+- Client: Alice
+- Server: Bob
 
 I: Encryption/decryption with AES, 128-bit key, CBC mode
 Assume Alice and Bob have a shared secret key.
