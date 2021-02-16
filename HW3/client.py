@@ -13,15 +13,16 @@
 import socket
 import time
 from Cryptodome.Cipher import AES, PKCS1_OAEP
+from Crypto.Util.Padding import pad
 from Crypto.PublicKey import RSA
 
 # declare+connect socket
 address='127.0.0.1'
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect((address, 8001))
+client.connect((address, 8000))
 
-# Encrypts message with AES and sends nonce, ciphertext, and tag to the server 
-def encryptAES(message):
+# Encrypts message with AES_EAX and sends nonce, ciphertext, and tag to the server 
+def encryptAES_EAX(message):
 	# Get shared key from keyfile
 	key_file = open("AES_key_file.bin", "rb")
 	key = key_file.read(16)	
@@ -32,6 +33,7 @@ def encryptAES(message):
 	cipher = AES.new(key, AES.MODE_EAX)
 	nonce = cipher.nonce
 	ciphertext, tag = cipher.encrypt_and_digest(message.encode("utf-8"))
+	ciphertext, tag = cipher.encrypt_and_digest(pad(message.encode("utf-8"), AES.block_size))
 	print("Sending nonce to server: " + str(nonce))
 	print("Sending ciphertext to server: " + str(ciphertext))
 	print("Sending tag to server: " + str(tag))
@@ -45,13 +47,37 @@ def encryptAES(message):
 	# are then decoded to utf-8 strings by the server and the individual vars are
 	# re-encoded using latin-1.
 
+# Encrypts message with AES_CBC and sends nonce, ciphertext, and tag to the server 
+def encryptAES_CBC(message):
+	# Get shared key from keyfile
+	key_file = open("AES_key_file.bin", "rb")
+	key = key_file.read(16)	
+	print("\nFound shared key: " + str(key))
+#	print("Key file type: "+str(type(key)))	
+	
+	# Get cipher from key, then use cipher to generate nonce, ciphertext, and tag
+	cipher = AES.new(key, AES.MODE_CBC)
+	iv = cipher.iv
+	ciphertext = cipher.encrypt(pad(message.encode("utf-8"), AES.block_size))
+	print("Sending IV to server: " + str(iv))
+	print("Sending ciphertext to server: " + str(ciphertext))
+
+	# Send iv and ciphertext to server
+	send("2#####" + iv.decode("latin-1") + "#####" + ciphertext.decode("latin-1"))	
+	
+	# Note:
+	# Nonce, ciphertext, and tag are decoded as latin-1 strings individually, then
+	# the entire message is encoded with utf-8 before being sent. The messages
+	# are then decoded to utf-8 strings by the server and the individual vars are
+	# re-encoded using latin-1.
+
 # Encrypts message with RSA and sends to the server	
 def encryptRSA(message):
 	public_key = RSA.import_key(open("RSA_key_file.pem").read())
 	print("\nFound public RSA key: " + str(public_key))	
 	cipher = PKCS1_OAEP.new(public_key)
 	ciphertext = cipher.encrypt(message.encode("utf-8"))
-	send("2#####" + ciphertext.decode("latin-1"))
+	send("3#####" + ciphertext.decode("latin-1"))
 
 def main():
 	# Send connection request, wait, then print response
@@ -64,15 +90,18 @@ def main():
 def menu():
 	while True:
 		ciphertext = ""
-		inp = input("Select an encryption scheme:\n1 - 128-bit AES\n2 - 2048-bit RSA\n\n")
+		inp = input("Select an encryption scheme:\n1 - 128-bit AES_EAX\n2 - 128-bit AES_CBC\n3 - 2048-bit RSA\n\n")
 		if(inp=="1"):
 			message = input("Please enter an 18-byte message to send to Bob:\n")
-			encryptAES(message);
+			encryptAES_EAX(message);
 		elif(inp=="2"):
 			message = input("Please enter an 18-byte message to send to Bob:\n")
-			encryptRSA(message)
+			encryptAES_CBC(message)
 		elif(inp=="3"):
-			send("3#")
+			message = input("Please enter an 18-byte message to send to Bob:\n")
+			encryptRSA(message)
+		elif(inp=="4"):
+			send("4#")
 			client.close()
 			exit()
 		else:
