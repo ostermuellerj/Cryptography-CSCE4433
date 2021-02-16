@@ -12,10 +12,11 @@
 
 import socket
 from Cryptodome.Cipher import AES, PKCS1_OAEP
+from Crypto.Util.Padding import pad, unpad
 from Cryptodome.Random import get_random_bytes
 from Crypto.PublicKey import RSA
 
-portNum = 8001
+portNum = 8000
 serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serv.bind(('127.0.0.1', portNum))
 serv.listen(5)
@@ -28,11 +29,19 @@ print(key)
 key_file.write(key) 
 key_file.close()
 
-# Local AES encryption/decryption testing:
+# Local AES encryption/decryption testing: CBC uses iv, EAX uses nonce
 #cipher = AES.new(key, AES.MODE_EAX)
+cipher = AES.new(key, AES.MODE_CBC)
 #nonce = cipher.nonce
 #ciphertext, tag = cipher.encrypt_and_digest("0101010101".encode("utf-8"))
+message = "abcd".encode("utf-8")
+ciphertext = cipher.encrypt(pad(message, AES.block_size))
+iv = cipher.iv
 #cipher2 = AES.new(key, AES.MODE_EAX, nonce=nonce)
+cipher2 = AES.new(key, AES.MODE_CBC, iv)
+pt = unpad(cipher2.decrypt(ciphertext), AES.block_size)
+print("pt:")
+print(pt)
 #out = cipher2.decrypt(ciphertext)
 #print(type(out))
 #print(out.decode())
@@ -57,8 +66,8 @@ RSA_key_file.close()
 
 print("\nWaiting for connection on 0.0.0.0:" + str(portNum)+" ...")
 
-# Decrypt an AES-encrypted message given the nonce, ciphertext, and tag
-def decryptAES(nonce, ciphertext, tag):
+# Decrypt an AES_EAX-encrypted message given the nonce, ciphertext, and tag
+def encryptAES_EAX(nonce, ciphertext, tag):
 	print("RECIEVED FROM CLIENT...")
 	print("Nonce: " + shorten(str(nonce)))
 	print("Ciphertext: " + shorten(str(ciphertext)))
@@ -81,7 +90,32 @@ def decryptAES(nonce, ciphertext, tag):
 	except Exception as e: 
 		print(e)
 		print('cannot return decryption')
+
+# Decrypt an AES_CBC-encrypted message given the iv and ciphertext
+def encryptAES_CBC(iv, ciphertext):
+	print("RECIEVED FROM CLIENT...")
+	print("IV: " + shorten(str(iv)))
+	print("Ciphertext: " + shorten(str(ciphertext)))	
+	
+	try:
+		cipher = AES.new(key, AES.MODE_CBC, iv.encode("latin-1"))		
+	except Exception as e: 
+		print(e)
+	
+	try:
+#		out = cipher.decrypt(ciphertext.encode("latin-1"))
+		out = unpad(cipher.decrypt(ciphertext.encode("latin-1")), AES.block_size)
+	except Exception as e: 
+		print(e)
+		print('cannot decrypt')
 		
+	try:
+		return out
+	except Exception as e: 
+		print(e)
+		print('cannot return decryption')
+		
+
 def decryptRSA(ciphertext):
 	print("RECIEVED FROM CLIENT...")
 	print("Ciphertext: " + shorten(str(ciphertext)) + "\n")	
@@ -144,22 +178,36 @@ while True:
 			print("\nClient successfully connected at " + value + ":" + str(portNum) + "\n")
 			return_msg="Successfully connected to server at " + value + ":" + str(portNum)
 		
-		# Request to decrypt AES message
+		# Request to decrypt AES_EAX message
 		elif(selection=="1"):
 			print("Decrypting with AES...\n")
 			try:
 				nonce = from_client[1]
 				ciphertext = from_client[2]
 				tag = from_client[3]
-				message = decryptAES(nonce, ciphertext, tag)								
+				message = encryptAES_EAX(nonce, ciphertext, tag)								
 				print("Decrypted message:\n" + message.decode())
 				return_msg="Message was decrypted by server: " + str(message)
 			except Exception as e: 
 				print(e)
 				print("Cannot parse AES paramenters from client")
+
+		# Request to decrypt AES_CBC message
+		elif(selection=="2"):
+			print("Decrypting with AES...\n")
+			try:
+				iv = from_client[1]
+				ciphertext = from_client[2]
+				message = encryptAES_CBC(iv, ciphertext)								
+				print("Decrypted message:\n" + message.decode())
+				return_msg="Message was decrypted by server: " + str(message)
+			except Exception as e: 
+				print(e)
+				print("Cannot parse AES paramenters from client")
+
 		
 		# Request to decrypt RSA message.
-		elif(selection=="2"):
+		elif(selection=="3"):
 			print("Decrypting with RSA...\n")
 			try:
 				ciphertext = from_client[1]
@@ -171,7 +219,7 @@ while True:
 				print("Cannot parse RSA ciphertext from client")
 		
 		# Request to terminate session.
-		elif(selection=="3"):
+		elif(selection=="4"):
 			conn.close()
 			print ('Client disconnected')
 			break
