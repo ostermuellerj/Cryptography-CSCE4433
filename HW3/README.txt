@@ -1,4 +1,4 @@
-#Encrypted client-server socket communication
+# Encrypted client-server socket communication
 
 This program implements AES (optional EAX or CBC mode) and RSA (single key, not secure) encryption for user-inputted messages over a socket connection between two programs.
 
