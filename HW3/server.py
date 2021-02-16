@@ -3,18 +3,18 @@
 #Cryptography HW3
 
 # This program (server.py) is "Bob", who decryptes messages and returns them to "Alice" (client.py).
+
 # PyCryptodome:
 # pip install pycryptodomex
 # https://pycryptodome.readthedocs.io/en/latest/src/examples.html
 # https://pycryptodome.readthedocs.io/en/latest/src/cipher/aes.html?highlight=aes
 # https://pycryptodome.readthedocs.io/en/latest/src/public_key/rsa.html?highlight=rsa
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 import socket
 from Cryptodome.Cipher import AES, PKCS1_OAEP
-from Crypto.Util.Padding import pad, unpad
+from Cryptodome.Util.Padding import pad, unpad
 from Cryptodome.Random import get_random_bytes
-from Crypto.PublicKey import RSA
+from Cryptodome.PublicKey import RSA
 
 portNum = 8000
 serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,23 +29,6 @@ print(key)
 key_file.write(key) 
 key_file.close()
 
-# Local AES encryption/decryption testing: CBC uses iv, EAX uses nonce
-#cipher = AES.new(key, AES.MODE_EAX)
-cipher = AES.new(key, AES.MODE_CBC)
-#nonce = cipher.nonce
-#ciphertext, tag = cipher.encrypt_and_digest("0101010101".encode("utf-8"))
-message = "abcd".encode("utf-8")
-ciphertext = cipher.encrypt(pad(message, AES.block_size))
-iv = cipher.iv
-#cipher2 = AES.new(key, AES.MODE_EAX, nonce=nonce)
-cipher2 = AES.new(key, AES.MODE_CBC, iv)
-pt = unpad(cipher2.decrypt(ciphertext), AES.block_size)
-print("pt:")
-print(pt)
-#out = cipher2.decrypt(ciphertext)
-#print(type(out))
-#print(out.decode())
-
 # Generate RSA public key and place in key file. 
 RSA_key = RSA.generate(2048)
 print("\nRSA public key generated (hidden).")
@@ -53,16 +36,6 @@ public_key = RSA_key.export_key()
 RSA_key_file = open("RSA_key_file.pem", "wb")
 RSA_key_file.write(public_key)
 RSA_key_file.close()
-
-# Local RSA encryption/decryption testing:
-#public_key = RSA.import_key(open("RSA_key_file.pem").read())
-#RSA_cipher = PKCS1_OAEP.new(public_key)
-#message = "message1"
-#RSA_ciphertext = RSA_cipher.encrypt(message.encode("latin-1"))
-#RSA_cipher2 = PKCS1_OAEP.new(public_key)
-#message = RSA_cipher2.decrypt(RSA_ciphertext).decode("latin-1") 
-#print("Decoded message: ")
-#print(message)
 
 print("\nWaiting for connection on 0.0.0.0:" + str(portNum)+" ...")
 
@@ -103,7 +76,6 @@ def encryptAES_CBC(iv, ciphertext):
 		print(e)
 	
 	try:
-#		out = cipher.decrypt(ciphertext.encode("latin-1"))
 		out = unpad(cipher.decrypt(ciphertext.encode("latin-1")), AES.block_size)
 	except Exception as e: 
 		print(e)

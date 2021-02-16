@@ -2,14 +2,17 @@
 #010887505
 #Cryptography HW3
 
+# Testbench for AES and RSA encryption with various keysizes.
+
 import time
 from Cryptodome.Cipher import AES, PKCS1_OAEP
-from Crypto.Util.Padding import pad, unpad
+from Cryptodome.Util.Padding import pad, unpad
 from Cryptodome.Random import get_random_bytes
-from Crypto.PublicKey import RSA
+from Cryptodome.PublicKey import RSA
 
 init = 0
 
+# Number of iterations for each algorithm+keysize
 n = 100
 
 def main():
@@ -17,7 +20,7 @@ def main():
 	
 	init = time.time()
 
-	#first element is encryption time, second element is decryption time
+	# A[0] = total encryption time, A[1] = total decryption time
 	AES128_sums = [0, 0]
 	AES192_sums = [0, 0]
 	AES256_sums = [0, 0]
@@ -60,6 +63,8 @@ def main():
 		RSA4096_sums[1] += results[1]
 		
 		
+	# Calculate averages	
+		
 	AES128_sums[0]/=n
 	AES128_sums[1]/=n
 	
@@ -77,6 +82,8 @@ def main():
 
 	RSA4096_sums[0]/=n
 	RSA4096_sums[1]/=n
+	
+	# Print results and write to file "testbench.txt"
 	
 	print("AES 128 e: " + str(AES128_sums[0]))
 	print("AES 128 d: " + str(AES128_sums[0])+"\n")
@@ -118,12 +125,12 @@ def main():
 	f.write("RSA 4096 d: " + str(RSA4096_sums[0])+"s\n")
 	
 	f.write("\nTotal time: " + str(time.time()-init) + "s\n")
-
 	f.close()
 
-
-
+# Run a local AES encryption/decryption with given message and key size
+# Returns elapsed time for encryption and decryption
 def doAES(message, keySize):
+	
 	# Encrypt
 	encryptStart = time.time()
 	key = get_random_bytes(keySize)
@@ -132,7 +139,7 @@ def doAES(message, keySize):
 	iv = cipher.iv
 	encryptTime = time.time()-encryptStart
 
-	#Decrypt
+	# Decrypt
 	decryptStart = time.time()
 	cipher2 = AES.new(key, AES.MODE_CBC, iv)
 	pt = unpad(cipher2.decrypt(ciphertext), AES.block_size)
@@ -141,7 +148,10 @@ def doAES(message, keySize):
 	
 	return (encryptTime, decryptTime)
 
+# Run a local RSA encryption/decryption (single key) with given message and key size
+# Returns elapsed time for encryption and decryption
 def doRSA(message, keySize):
+	
 	# Encrypt
 	encryptStart = time.time()
 	RSA_key = RSA.generate(keySize)
@@ -149,7 +159,7 @@ def doRSA(message, keySize):
 	RSA_ciphertext = RSA_cipher.encrypt(message.encode())
 	encryptTime = time.time()-encryptStart
 
-	#Decrypt
+	# Decrypt
 	decryptStart = time.time()
 	RSA_cipher2 = PKCS1_OAEP.new(RSA_key)
 	out = RSA_cipher2.decrypt(RSA_ciphertext).decode() 
