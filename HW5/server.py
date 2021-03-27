@@ -24,17 +24,17 @@ serv.bind(('127.0.0.1', portNum))
 serv.listen(5)
 
 #Generate shared key for HMAC
-key_file = open("HMAC_key_file.bin", "wb")
-key = get_random_bytes(16)
-key_file.write(key) 
-key_file.close()
+HMAC_key_file = open("HMAC_key_file.bin", "wb")
+HMAC_key = get_random_bytes(16)
+HMAC_key_file.write(HMAC_key) 
+HMAC_key_file.close()
 
 # Generate AES key file (Alice/Client and Bob/Server can both access, we assume it is secure)
 key_file = open("AES_key_file.bin", "wb")
-HMAC_key = get_random_bytes(16)
+key = get_random_bytes(16)
 print("\nAES shared key generated: ")
-print(HMAC_key)
-key_file.write(HMAC_key) 
+print(key)
+key_file.write(key) 
 key_file.close()
 
 # Generate RSA public key and place in key file. 
@@ -51,13 +51,13 @@ print("\nWaiting for connection on 0.0.0.0:" + str(portNum)+" ...")
 def verifyHMAC(message, hmac):
 	print("RECIEVED FROM CLIENT...")
 	print("Message: " + shorten(message))
-	print("HMAC: " + shorten(hmac))
+	print("HMAC: " + shorten(str(hmac)))
 	
-	h = HMAC.new(secret, digestmod=SHA256)
-	h.update(message)	
+	h = HMAC.new(HMAC_key, digestmod=SHA256)
+	h.update(message.encode('utf-8'))	
 	
 	try:
-		h.hexverify(h.hexdigest())
+		h.hexverify(hmac)
 		result = "The message is authentic"
 	except ValueError:
 		result = "The message or key is invalid"
@@ -68,9 +68,9 @@ def verifyHMAC(message, hmac):
 def verifySignature(message, signature):
 	print("RECIEVED FROM CLIENT...")
 	print("Message: " + shorten(message))
-	print("Signature: " + shorten(signature))	
+	print("Signature: " + shorten(str(signature)))	
 	
-	h = SHA256.new(message)
+	h = SHA256.new(message.encode('utf-8'))
 
 	try:
 		pkcs1_15.new(key).verify(h, signature)
@@ -236,8 +236,13 @@ while True:
 			print("Authenticating HMAC...\n")
 			try:
 				message = from_client[1]
-				result = verifyHMAC(message)
-				print("Message:\n" + message.decode())
+				hmac = from_client[2]
+				try:	
+					result = verifyHMAC(message, hmac.encode('latin-1').decode('utf-8'))
+				except Exception as e: 
+					print(e)
+					print('cannot verify hmac')
+				print("Message:\n" + message)
 				print(result)
 			except Exception as e: 
 				print(e)
@@ -245,11 +250,12 @@ while True:
 
 		# Request to authenticate RSA signature.
 		elif(selection=="6"):
-			print("Decrypting with RSA...\n")
+			print("Authenticating RSA signature...\n")
 			try:
 				message = from_client[1]
-				result = verifySignature(message)
-				print("Message:\n" + message.decode())
+				signature = from_client[2]				
+				result = verifySignature(message, signature.encode('latin-1').decode('utf-8'))
+				print("Message:\n" + message)
 				print(result)
 			except Exception as e: 
 				print(e)

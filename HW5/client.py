@@ -21,6 +21,7 @@ from Cryptodome.Cipher import AES, PKCS1_OAEP
 from Cryptodome.Util.Padding import pad
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Hash import HMAC, SHA256
+from Cryptodome.Signature import pkcs1_15
 
 # declare+connect socket
 address='127.0.0.1'
@@ -33,23 +34,24 @@ def generateHMAC(message):
 	key = key_file.read(16)
 	key_file.close()
 	h = HMAC.new(key, digestmod=SHA256)
-	h.update(message)
-	hmac = h.hexdigest()
+	h.update(message.encode('utf-8'))
+	hmac = h.hexdigest().encode('utf-8')
 	print("Generated HMAC:")
 	print(hmac)
-	
+		
 	# Send message and HMAC to server
-	send("5#####" + message.decode("latin-1") + "#####" + hmac.decode("latin-1"))
+	send("5#####" + message + "#####" + hmac.decode('latin-1'))
 
 # Generates signature of message using shared RSA key
 def signRSA(message):
-	public_key = RSA.import_key(open("RSA_key_file.pem").read())
-	public_key.close()
-	h = SHA256.new(message)
+	key_file = open("RSA_key_file.pem")
+	public_key = RSA.import_key(key_file.read())
+	key_file.close()
+	h = SHA256.new(message.encode('utf-8'))
 	signature = pkcs1_15.new(public_key).sign(h)
 
 	# Send message and signature to server
-	send("6#####" + message.decode("latin-1") + "#####" + signature.decode("latin-1"))
+	send("6#####" + message + "#####" + signature.decode("latin-1"))
 
 # Encrypts message with AES_EAX and sends nonce, ciphertext, and tag to the server 
 def encryptAES_EAX(message):
@@ -113,7 +115,7 @@ def main():
 def menu():
 	while True:
 		ciphertext = ""
-		inp = input("Select an encryption scheme:\n1 - 128-bit AES_EAX\n2 - 128-bit AES_CBC\n3 - 2048-bit RSA\n\n")
+		inp = input("Select an authentication scheme:\n1 - 128-bit AES_EAX\n2 - 128-bit AES_CBC\n3 - 2048-bit RSA\n\n")
 		if(inp=="1"):
 			message = input("Please enter an 18-byte message to send to Bob:\n")
 			encryptAES_EAX(message);
@@ -127,6 +129,12 @@ def menu():
 			send("4#")
 			client.close()
 			exit()
+		elif(inp=="5"):
+			message = input("Please enter an 18-byte message to send to Bob:\n")
+			generateHMAC(message)
+		elif(inp=="6"):
+			message = input("Please enter an 18-byte message to send to Bob:\n")
+			signRSA(message)
 		else:
 			print("Please enter valid input, or enter 3 to exit e.g. \"1\", \"2\", \"3\", ...)")	
 
