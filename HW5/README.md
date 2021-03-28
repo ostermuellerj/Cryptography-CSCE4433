@@ -1,26 +1,30 @@
-# Encrypted client-server socket communication
+# Digital Signature and HMAC
 
-This program implements AES (optional EAX or CBC mode) and RSA (single key, not secure) encryption for user-inputted messages over a socket connection between two programs.
-
-- Client: Alice
-- Server: Bob
-
-I: Encryption/decryption with AES, 128-bit key, CBC mode
-Assume Alice and Bob have a shared secret key.
-- Alice encrypts 18-byte message m (inputted from cmd line) which is encrypted as ciphertext.
-- Message is sent to Bob
-- Bob reads and decrypts ciphertext, then prints ciphertext and message m
+I. Authentication with HMAC, SHA256.
+	- Alice and Bob have 16-byte shared secret key (read from file).
+	- Alice generates HMAC of 18-byte message (inputted from the cmd line)
+	  and writes the message and the HMAC into "mactext".
+	- Bob reads message and HMAC, then verifies HMAC
 	
-II: Encryption/decryption with RSA (using public key only), 2048-bit key
-- Bob sends public key to Alice
-- Alice encrypts 18-byte message (inputted from cmd line) using Bob's public key.
-- Message is sent to bob
-- Bob reads and decrypts ciphertext, then prints ciphertext and message m
-
-III: Compare performance of AES and RSA under different parameters (seperate program)
-- Take a 7-byte message manually input from the command line.
-- For 100 iterations, compute average runtimes for:
-	- AES key sizes 128-bit, 192-bit, 256-bit, measure average time of encryption 
-	 AND average time of decryption for EACH key size (6 measurements)
-	- RSA key sizes 1024-bit, 20148-bit, 4096-bit, measure average time of encryption 
-	 AND average time of decryption for EACH key size (6 measurements)	
+II. Digital signature with RSA and 2048-bit key.
+	- Bob gets Alice's public key.
+	- Alice signs 18-byte message using her private key to get a signature
+	  then writes message and signature into "sigtext"
+	- Bob reads message & signature, verifies signature with Alice's public key
+	
+III. Performance testing of HMAC and digital signature.
+	- Get 7-byte message from cmd line.
+	- HMAC (SHA256, 16-byte key) of message is generated 100 times, the generation 
+	  of each key is timed in order to calculate the average.
+	- RSA (2048-bit key) digital signature of the message is generated then verified 
+	  100 times, timed to calculate average generation/verification time.
+	- The program outputs averages for (1) HMAC generation time, (2) RSA digital signature
+	  generation time, and (3) signature verification time.
+	  
+IV. Hash collision and birthday paradox.
+	- Assume a hash fuction H(), where H(m) = {First 8 bitrs of SHA-256(m)}
+	- Hash values for random messages are generataed using this special hash function 
+	  until two messages are found that generate the same hash valaue. These two messages
+	  and the equivalent hash value are outputted.
+	- This process is repeated for 20 iterations. The program finds the average number of 
+	  trials needed to find a collision.
