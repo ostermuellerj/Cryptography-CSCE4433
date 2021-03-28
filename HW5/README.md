@@ -22,7 +22,7 @@ III. Performance testing of HMAC and digital signature.
 	  generation time, and (3) signature verification time.
 	  
 IV. Hash collision and birthday paradox.
-	- Assume a hash fuction H(), where H(m) = {First 8 bitrs of SHA-256(m)}
+	- Assume a hash fuction H(), where H(m) = {First 8 bits of SHA-256(m)}
 	- Hash values for random messages are generataed using this special hash function 
 	  until two messages are found that generate the same hash valaue. These two messages
 	  and the equivalent hash value are outputted.
