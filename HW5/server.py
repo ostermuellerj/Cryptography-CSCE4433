@@ -70,10 +70,9 @@ def verifySignature(message, signature):
 	print("Message: " + shorten(message))
 	print("Signature: " + shorten(str(signature)))	
 	
-	h = SHA256.new(message.encode('utf-8'))
-
 	try:
-		pkcs1_15.new(key).verify(h, signature)
+		h = SHA256.new(message.encode('utf-8'))
+		pkcs1_15.new(RSA_key).verify(h, signature)
 		result = "The signature is valid"
 	except ValueError:
 		result = "The signature or key is invalid"
@@ -253,8 +252,10 @@ while True:
 			print("Authenticating RSA signature...\n")
 			try:
 				message = from_client[1]
-				signature = from_client[2]				
-				result = verifySignature(message, signature.encode('latin-1').decode('utf-8'))
+				signature = from_client[2]	
+				
+				signature = signature.encode('latin-1')
+				result = verifySignature(message, signature)
 				print("Message:\n" + message)
 				print(result)
 			except Exception as e: 
