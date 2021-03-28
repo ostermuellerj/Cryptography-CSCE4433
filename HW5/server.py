@@ -1,14 +1,6 @@
 #JOHN OSTERMUELLER
 #010887505
-#Cryptography HW3
-
-# This program (server.py) is "Bob", who decryptes messages and returns them to "Alice" (client.py).
-
-# PyCryptodome:
-# pip install pycryptodomex
-# https://pycryptodome.readthedocs.io/en/latest/src/examples.html
-# https://pycryptodome.readthedocs.io/en/latest/src/cipher/aes.html?highlight=aes
-# https://pycryptodome.readthedocs.io/en/latest/src/public_key/rsa.html?highlight=rsa
+#Cryptography HW5
 
 import socket
 from Cryptodome.Cipher import AES, PKCS1_OAEP
@@ -28,14 +20,6 @@ HMAC_key_file = open("HMAC_key_file.bin", "wb")
 HMAC_key = get_random_bytes(16)
 HMAC_key_file.write(HMAC_key) 
 HMAC_key_file.close()
-
-# Generate AES key file (Alice/Client and Bob/Server can both access, we assume it is secure)
-key_file = open("AES_key_file.bin", "wb")
-key = get_random_bytes(16)
-print("\nAES shared key generated: ")
-print(key)
-key_file.write(key) 
-key_file.close()
 
 # Generate RSA public key and place in key file. 
 RSA_key = RSA.generate(2048)
@@ -78,77 +62,6 @@ def verifySignature(message, signature):
 		result = "The signature or key is invalid"
 	print(result)
 	return result
-		
-# Decrypt an AES_EAX-encrypted message given the nonce, ciphertext, and tag
-def decryptAES_EAX(nonce, ciphertext, tag):
-	print("RECIEVED FROM CLIENT...")
-	print("Nonce: " + shorten(str(nonce)))
-	print("Ciphertext: " + shorten(str(ciphertext)))
-	print("Tag: " + shorten(str(tag)) + "\n")		
-	
-	try:
-		cipher = AES.new(key, AES.MODE_EAX, nonce=nonce.encode("latin-1"))		
-	except Exception as e: 
-		print(e)
-	
-	try:
-#		out = cipher.decrypt(ciphertext.encode("latin-1"))
-		out = cipher.decrypt_and_verify(ciphertext.encode("latin-1"), tag.encode("latin-1"))
-	except Exception as e: 
-		print(e)
-		print('cannot decrypt')
-		
-	try:
-		return out
-	except Exception as e: 
-		print(e)
-		print('cannot return decryption')
-
-# Decrypt an AES_CBC-encrypted message given the iv and ciphertext
-def decryptAES_CBC(iv, ciphertext):
-	print("RECIEVED FROM CLIENT...")
-	print("IV: " + shorten(str(iv)))
-	print("Ciphertext: " + shorten(str(ciphertext)))	
-	
-	try:
-		cipher = AES.new(key, AES.MODE_CBC, iv.encode("latin-1"))		
-	except Exception as e: 
-		print(e)
-	
-	try:
-		out = unpad(cipher.decrypt(ciphertext.encode("latin-1")), AES.block_size)
-	except Exception as e: 
-		print(e)
-		print('cannot decrypt')
-		
-	try:
-		return out
-	except Exception as e: 
-		print(e)
-		print('cannot return decryption')
-		
-
-def decryptRSA(ciphertext):
-	print("RECIEVED FROM CLIENT...")
-	print("Ciphertext: " + shorten(str(ciphertext)) + "\n")	
-	
-	try:
-		cipher = PKCS1_OAEP.new(RSA.import_key(open("RSA_key_file.pem").read()))		
-	except Exception as e: 
-		print(e)
-		print("cannot make rsa cipher")
-	
-	try:
-		out = cipher.decrypt(ciphertext.encode("latin-1"))
-	except Exception as e: 
-		print(e)
-		print('cannot decrypt rsa')
-		
-	try:
-		return out
-	except Exception as e: 
-		print(e)
-		print('cannot return rsa decryption')
 
 # Shortens a string if len>20
 def shorten(string):
@@ -190,48 +103,8 @@ while True:
 			print("\nClient successfully connected at " + value + ":" + str(portNum) + "\n")
 			return_msg="Successfully connected to server at " + value + ":" + str(portNum)
 		
-		# Request to decrypt AES_EAX message
-		elif(selection=="1"):
-			print("Decrypting with AES...\n")
-			try:
-				nonce = from_client[1]
-				ciphertext = from_client[2]
-				tag = from_client[3]
-				message = decryptAES_EAX(nonce, ciphertext, tag)								
-				print("Decrypted message:\n" + message.decode())
-				return_msg="Message was decrypted by server: " + str(message)
-			except Exception as e: 
-				print(e)
-				print("Cannot parse AES paramenters from client")
-
-		# Request to decrypt AES_CBC message
-		elif(selection=="2"):
-			print("Decrypting with AES...\n")
-			try:
-				iv = from_client[1]
-				ciphertext = from_client[2]
-				message = decryptAES_CBC(iv, ciphertext)								
-				print("Decrypted message:\n" + message.decode())
-				return_msg="Message was decrypted by server: " + str(message)
-			except Exception as e: 
-				print(e)
-				print("Cannot parse AES paramenters from client")
-
-		
-		# Request to decrypt RSA message.
-		elif(selection=="3"):
-			print("Decrypting with RSA...\n")
-			try:
-				ciphertext = from_client[1]
-				message = decryptRSA(ciphertext)
-				print("Decrypted message:\n" + message.decode())
-				return_msg="Message was decrypted by server: " + str(message)
-			except Exception as e: 
-				print(e)
-				print("Cannot parse RSA ciphertext from client")
-
 		# Request to authenticate HMAC.
-		elif(selection=="5"):
+		elif(selection=="1"):
 			print("Authenticating HMAC...\n")
 			try:
 				message = from_client[1]
@@ -248,7 +121,7 @@ while True:
 				print("Cannot parse HMAC from client")
 
 		# Request to authenticate RSA signature.
-		elif(selection=="6"):
+		elif(selection=="2"):
 			print("Authenticating RSA signature...\n")
 			try:
 				message = from_client[1]
@@ -263,7 +136,7 @@ while True:
 				print("Cannot parse RSA signature from client")		
 		
 		# Request to terminate session.
-		elif(selection=="4"):
+		elif(selection=="3"):
 			conn.close()
 			print ('Client disconnected')
 			break

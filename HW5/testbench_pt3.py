@@ -1,3 +1,12 @@
+#JOHN OSTERMUELLER
+#010887505
+#Cryptography HW5
+
+# This program demonstrates the avg runtime of: 
+#	1. HMAC generation 
+#	2. RSA signature generation 
+#	3. RSA signature verification
+
 import time
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Hash import HMAC, SHA256

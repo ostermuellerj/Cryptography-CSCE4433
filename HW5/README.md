@@ -1,4 +1,5 @@
 # Digital Signature and HMAC
+Instead of using mactext and sigtext files to demonstrate the ability to corrupt, I added seperate lines in the HMAC and RSA generation functions to manually corrupt the HMAC or signature, respectively.
 
 I. Authentication with HMAC, SHA256.
 	- Alice and Bob have 16-byte shared secret key (read from file).

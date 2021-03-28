@@ -1,3 +1,7 @@
+#JOHN OSTERMUELLER
+#010887505
+#Cryptography HW5
+
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Hash import HMAC, SHA256
 from Cryptodome.Signature import pkcs1_15
